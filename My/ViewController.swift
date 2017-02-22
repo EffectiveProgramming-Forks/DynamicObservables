@@ -23,29 +23,23 @@ class ViewController: UIViewController {
 		sink.total.map { "\($0)" }
 			.bindTo(totalLabel.rx.text)
 			.disposed(by: bag)
+		
 		sink.cells.subscribe(onNext: {
 			self.cells = $0
 			self.tableView.reloadData()
 		}).disposed(by: bag)
 	}
 
-	override func didReceiveMemoryWarning() {
-		super.didReceiveMemoryWarning()
-		// Dispose of any resources that can be recreated.
-	}
-
 	var sink: Sink!
 	var cells: [String] = []
 	let bag = DisposeBag()
 
-	let cellAdder = PublishSubject<CellSource>()
 	let cellRemover = PublishSubject<String>()
 }
 
 extension ViewController: Source {
 	var add: Observable<Void> { return addButton.rx.tap.asObservable() }
-	var addCell: Observable<CellSource> { return cellAdder.asObservable() }
-	var removeCell: Observable<String> { return cellRemover.asObservable() }
+	var remove: Observable<String> { return cellRemover.asObservable() }
 }
 
 extension ViewController: UITableViewDataSource {
@@ -58,5 +52,11 @@ extension ViewController: UITableViewDataSource {
 		cell.sinkFactory = sink.cellSinkFactory(id: cells[indexPath.row])
 		return cell
 	}
+}
 
+extension ViewController: UITableViewDelegate {
+	func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+		guard editingStyle == .delete else { return }
+		cellRemover.onNext(cells[indexPath.row])
+	}
 }

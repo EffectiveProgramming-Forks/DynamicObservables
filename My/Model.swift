@@ -13,13 +13,13 @@ import RxSwift
 public
 protocol Source {
 	var add: Observable<Void> { get }
+	var remove: Observable<String> { get }
 }
 
 struct Sink {
 
 	let total: Observable<Int>
 	let cells: Observable<[String]>
-	private let cellSinks = Variable<[String: Int]>([:])
 
 	func cellSinkFactory(id: String) -> (_ source: CellSource) -> CellSink {
 		return { source in
@@ -43,8 +43,27 @@ struct Sink {
 
 	init(source: Source) {
 		total = cellSinks.asObservable().map { $0.values.reduce(0) { $0.0 + $0.1 } }
-		cells = source.add.map { NSUUID().uuidString }.scan([]) { $0.0 + [$0.1] }
+		let adder = source.add.map { CellAction.add(NSUUID().uuidString) }
+		let remover = source.remove.map { CellAction.remove($0) }
+		cells = Observable.of(adder, remover).merge().scan([]) { current, next in
+			var result = current
+			switch next {
+			case .add(let id):
+				result.append(id)
+			case .remove(let id):
+				if let index = result.index(of: id) {
+					result.remove(at: index)
+				}
+			}
+			return result
+		}
 	}
+
+	private enum CellAction {
+		case add(String)
+		case remove(String)
+	}
+	private let cellSinks = Variable<[String: Int]>([:])
 }
 
 public
