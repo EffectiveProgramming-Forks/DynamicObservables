@@ -49,7 +49,7 @@ extension ViewController: UITableViewDataSource {
 
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! TableViewCell
-		cell.sinkFactory = sink.cellSinkFactory(id: cells[indexPath.row])
+		cell.configure(sink: sink.cellSink(id: cells[indexPath.row], source: cell))
 		return cell
 	}
 }

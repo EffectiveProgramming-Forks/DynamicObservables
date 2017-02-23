@@ -21,24 +21,22 @@ struct Sink {
 	let total: Observable<Int>
 	let cells: Observable<[String]>
 
-	func cellSinkFactory(id: String) -> (_ source: CellSource) -> CellSink {
-		return { source in
-			let sink: CellSink
-			if let current = self.cellSinks.value[id] {
-				sink = CellSink(id: id, initialValue: current, source: source)
-			}
-			else {
-				sink = CellSink(id: id, initialValue: 0, source: source)
-			}
-			sink.sum.map { (sink.id, $0) }
-				.subscribe(onNext: {
-					self.cellSinks.value[$0.0] = $0.1
-				}, onCompleted: {
-					self.cellSinks.value.removeValue(forKey: sink.id)
-				})
-				.disposed(by: source.bag)
-			return sink
+	func cellSink(id: String, source: CellSource) -> CellSink {
+		let sink: CellSink
+		if let current = self.cellSinks.value[id] {
+			sink = CellSink(id: id, initialValue: current, source: source)
 		}
+		else {
+			sink = CellSink(id: id, initialValue: 0, source: source)
+		}
+		sink.sum.map { (sink.id, $0) }
+			.subscribe(onNext: {
+				self.cellSinks.value[$0.0] = $0.1
+			}, onCompleted: {
+				self.cellSinks.value.removeValue(forKey: sink.id)
+			})
+			.disposed(by: source.bag)
+		return sink
 	}
 
 	init(source: Source) {

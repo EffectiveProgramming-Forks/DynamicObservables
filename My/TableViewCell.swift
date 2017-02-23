@@ -17,14 +17,11 @@ class TableViewCell: UITableViewCell {
 	@IBOutlet weak var decrementButton: UIButton!
 	@IBOutlet weak var outputLabel: UILabel!
 
-	var sinkFactory: (CellSource) -> CellSink = { _ in fatalError() } {
-		didSet {
-			let sink = sinkFactory(self)
-			sink.sum
-				.map { "\($0)" }
-				.bindTo(outputLabel.rx.text)
-				.disposed(by: bag)
-		}
+	func configure(sink: CellSink) {
+		sink.sum
+			.map { "\($0)" }
+			.bindTo(outputLabel.rx.text)
+			.disposed(by: bag)
 	}
 
 	let bag = DisposeBag()
