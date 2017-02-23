@@ -30,7 +30,7 @@ class MyCellTests: XCTestCase {
 		var result: Int? = nil
 		cellSink.sum.subscribe(onNext: { value in
 			result = value
-		}).addDisposableTo(bag)
+		}).disposed(by: bag)
 
 		XCTAssertEqual(result, 0)
 	}
@@ -39,7 +39,7 @@ class MyCellTests: XCTestCase {
 		var result: Int? = nil
 		cellSink.sum.subscribe(onNext: { value in
 			result = value
-		}).addDisposableTo(bag)
+		}).disposed(by: bag)
 
 		cellSource._increment.onNext()
 		XCTAssertEqual(result, 1)
@@ -49,7 +49,7 @@ class MyCellTests: XCTestCase {
 		var result: Int? = nil
 		cellSink.sum.subscribe(onNext: { value in
 			result = value
-		}).addDisposableTo(bag)
+		}).disposed(by: bag)
 
 		cellSource._increment.onNext()
 		cellSource._increment.onNext()
@@ -60,7 +60,7 @@ class MyCellTests: XCTestCase {
 		var result: Int? = nil
 		cellSink.sum.subscribe(onNext: { value in
 			result = value
-		}).addDisposableTo(bag)
+		}).disposed(by: bag)
 
 		cellSource._decrement.onNext()
 		XCTAssertEqual(result, -1)

@@ -56,7 +56,7 @@ struct Sink {
 				}
 			}
 			return result
-		}
+		}.startWith([])
 	}
 
 	private enum CellAction {
