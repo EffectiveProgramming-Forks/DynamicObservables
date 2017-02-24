@@ -21,12 +21,12 @@ class MockSource: Source
 	}
 
 	var cellSource: Observable<(id: ID, source: CellSource)> {
-		return _cells.asObservable()
+		return _cellSource.asObservable()
 	}
 
 	let _add = PublishSubject<Void>()
 	let _remove = PublishSubject<Int>()
-	let _cells = PublishSubject<(id: ID, source: CellSource)>()
+	let _cellSource = PublishSubject<(id: ID, source: CellSource)>()
 }
 
 class MockCellSource: CellSource

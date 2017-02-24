@@ -18,7 +18,8 @@ protocol Source: class {
 
 struct Sink {
 	let total: String
-	let cells: [(id: ID, sink: CellSink)]
+	let cells: [ID]
+	let sinks: [ID: Observable<CellSink>]
 }
 
 private enum CellAction {
@@ -27,29 +28,26 @@ private enum CellAction {
 }
 
 func sink(for source: Source) -> Observable<Sink> {
+	let firstID = ID()
+
+	let total = Observable.just("0")
 	let cells = Observable.of(source.add.map { CellAction.add }, source.remove.map { CellAction.remove($0) }).merge()
-		.scan(Array<(id: ID, sink: CellSink)>([(id: ID(), sink: CellSink(total: "0"))])) { cells, action in
+		.scan(Array<ID>([firstID])) { cells, action in
 			var result = cells
 			switch action {
 			case .remove(let index):
 				result.remove(at: index)
 			case .add:
-				result.append((id: ID(), sink: CellSink(total: "0")))
+				result.append(ID())
 			}
 			return result
-		}
+		}.startWith([firstID])
 
-	let cellSinks = source.cellSource.flatMap { (id, source) in cellSink(for: source).map { (id: id, sink: $0) }  }
+	let cellSinks: Observable<[ID: Observable<CellSink>]> = source.cellSource.map { (id, source) in [id: cellSink(for: source)] }.startWith([:])
 
-	return Observable.combineLatest(cells, cellSinks) { cells, sinks -> [(id: ID, sink: CellSink)] in
-		var result = cells
-		if let index = cells.index(where: { $0.id == sinks.id }) {
-			result[index].sink = sinks.sink
-		}
-		return result
+	return Observable<Sink>.combineLatest(total, cells, cellSinks) { (total, cells, sinks) -> Sink in
+		return Sink(total: total, cells: cells, sinks: sinks)
 	}
-	.map { Sink(total: "0", cells: $0) }
-	.startWith(Sink(total: "0", cells: [(id: ID(), sink: CellSink(total: "0"))]))
 }
 
 

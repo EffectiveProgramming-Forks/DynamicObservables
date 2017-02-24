@@ -25,11 +25,15 @@ class ViewController: UIViewController {
 			.bindTo(totalLabel.rx.text)
 			.disposed(by: bag)
 
-		s.map { $0.cells }
+		s.map { sink in sink.cells.map { (id: $0, sink: sink.sinks[$0]) } }
 			.bindTo(tableView.rx.items(cellIdentifier: "Cell")) { (row, element, cell) in
 				guard let cell = cell as? TableViewCell else { fatalError() }
-				cell.configure(with: element.sink)
-				self.sources.onNext((id: element.id, source: cell))
+				if let sink = element.sink {
+					cell.configure(with: sink)
+				}
+				else {
+					self.sources.onNext((id: element.id, source: cell))
+				}
 		}.disposed(by: bag)
 	}
 
