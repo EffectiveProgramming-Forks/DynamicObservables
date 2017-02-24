@@ -19,44 +19,35 @@ class ViewController: UIViewController {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		sink = Sink(source: self)
-		sink.total.map { "\($0)" }
+
+		let s = sink(for: self)
+		s.map { $0.total }
 			.bindTo(totalLabel.rx.text)
 			.disposed(by: bag)
-		
-		sink.cells.subscribe(onNext: {
-			self.cells = $0
-			self.tableView.reloadData()
-		}).disposed(by: bag)
+
+		s.map { $0.cells }
+			.bindTo(tableView.rx.items(cellIdentifier: "Cell")) { (row, element, cell) in
+				guard let cell = cell as? TableViewCell else { fatalError() }
+				cell.configure(with: element.sink)
+				self._cells.value[element.id] = cell
+		}.disposed(by: bag)
 	}
 
-	var sink: Sink!
-	var cells: [String] = []
+	let _cells = Variable<[ID: CellSource]>([:])
 	let bag = DisposeBag()
-
-	let cellRemover = PublishSubject<String>()
 }
 
 extension ViewController: Source {
-	var add: Observable<Void> { return addButton.rx.tap.asObservable() }
-	var remove: Observable<String> { return cellRemover.asObservable() }
-}
-
-extension ViewController: UITableViewDataSource {
-	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return cells.count
+	var add: Observable<Void> {
+		return addButton.rx.tap.asObservable()
 	}
 
-	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-		let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! TableViewCell
-		cell.configure(sink: sink.cellSink(id: cells[indexPath.row], source: cell))
-		return cell
+	var remove: Observable<Int> {
+		return tableView.rx.itemDeleted.map { $0.row }.asObservable()
 	}
-}
 
-extension ViewController: UITableViewDelegate {
-	func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-		guard editingStyle == .delete else { return }
-		cellRemover.onNext(cells[indexPath.row])
+	var cells: Observable<[ID: CellSource]> {
+		return _cells.asObservable()
 	}
+
 }

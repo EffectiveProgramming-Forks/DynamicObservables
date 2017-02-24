@@ -12,6 +12,49 @@ import RxTest
 @testable import My
 
 
+class MyTest: XCTestCase {
+
+	override func setUp() {
+		super.setUp()
+		source = MockSource()
+		self._sink = sink(for: source)
+		result = Sink(total: "", cells: [])
+		let _ = _sink.subscribe(onNext: { value in
+			self.result = value
+		})
+	}
+
+	private var source: MockSource!
+	private var _sink: Observable<Sink>!
+	private var result: Sink!
+
+	func testInitial() {
+		XCTAssertEqual(result.total, "0")
+		XCTAssertEqual(result.cells.count, 1)
+		XCTAssertEqual(result.cells[0].sink.total, "0")
+	}
+
+	func testRemove() {
+		source._remove.onNext(0)
+		XCTAssertEqual(result.total, "0")
+		XCTAssertEqual(result.cells.count, 0)
+	}
+
+	func testAdd() {
+		source._add.onNext()
+		XCTAssertEqual(result.total, "0")
+		XCTAssertEqual(result.cells.count, 2)
+	}
+
+	func testCell() {
+		let cell = MockCellSource()
+		let id = ID()
+		source._cells.onNext([id: cell])
+		cell._increment.onNext()
+		XCTAssertEqual(result.cells[0].sink.total, "1")
+	}
+}
+/*
 class MyTests: XCTestCase {
 
 	override func setUp() {
@@ -84,3 +127,4 @@ class MyTests: XCTestCase {
 		XCTAssert(result?.index(of: removed) == nil)
 	}
 }
+*/

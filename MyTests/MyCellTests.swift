@@ -16,53 +16,36 @@ class MyCellTests: XCTestCase {
 
 	override func setUp() {
 		super.setUp()
-
-		cellSource = MockCellSource()
-		cellSink = CellSink(id: "hello", initialValue: 0, source: cellSource)
-		bag = DisposeBag()
+		source = MockCellSource()
+		sink = cellSink(for: source)
+		result = CellSink(total: "")
+		let _ = sink.subscribe(onNext: { value in
+			self.result = value
+		})
 	}
 
-	private var cellSource: MockCellSource!
-	private var cellSink: CellSink!
-	private var bag: DisposeBag!
+	private var source: MockCellSource!
+	private var sink: Observable<CellSink>!
+	private var result: CellSink!
 
 	func testInitialValue() {
-		var result: Int? = nil
-		cellSink.sum.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-
-		XCTAssertEqual(result, 0)
+		XCTAssertEqual(result.total, "0")
 	}
 
 	func testIncrement() {
-		var result: Int? = nil
-		cellSink.sum.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
+		source._increment.onNext()
+		XCTAssertEqual(result.total, "1")
 
-		cellSource._increment.onNext()
-		XCTAssertEqual(result, 1)
-	}
-
-	func testIncrementTwice() {
-		var result: Int? = nil
-		cellSink.sum.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-
-		cellSource._increment.onNext()
-		cellSource._increment.onNext()
-		XCTAssertEqual(result, 2)
 	}
 
 	func testDecrement() {
-		var result: Int? = nil
-		cellSink.sum.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
+		source._decrement.onNext()
+		XCTAssertEqual(result.total, "-1")
+	}
 
-		cellSource._decrement.onNext()
-		XCTAssertEqual(result, -1)
+	func testIncrementThenDecrement() {
+		source._increment.onNext()
+		source._decrement.onNext()
+		XCTAssertEqual(result.total, "0")
 	}
 }

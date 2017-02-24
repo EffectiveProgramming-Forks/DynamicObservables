@@ -10,12 +10,41 @@ import Foundation
 import RxSwift
 
 
-public
 protocol Source {
 	var add: Observable<Void> { get }
-	var remove: Observable<String> { get }
+	var remove: Observable<Int> { get }
+	var cells: Observable<[ID: CellSource]> { get }
 }
 
+struct Sink {
+	let total: String
+	let cells: [(id: ID, sink: CellSink)]
+}
+
+private enum CellAction {
+	case add
+	case remove(Int)
+}
+
+func sink(for source: Source) -> Observable<Sink> {
+	let cells = Observable.of(source.add.map { CellAction.add }, source.remove.map { CellAction.remove($0) }).merge()
+		.scan(Array<(id: ID, sink: CellSink)>([(id: ID(), sink: CellSink(total: "0"))])) { cells, action in
+			var result = cells
+			switch action {
+			case .remove(let index):
+				result.remove(at: index)
+			case .add:
+				result.append((id: ID(), sink: CellSink(total: "0")))
+			}
+			return result
+		}
+
+	return cells.map { cells in
+		Sink(total: "0", cells: cells)
+	}.startWith(Sink(total: "0", cells: [(id: ID(), sink: CellSink(total: "0"))]))
+}
+
+/*
 struct Sink {
 
 	let total: Observable<Int>
@@ -63,24 +92,23 @@ struct Sink {
 	}
 	private let cellSinks = Variable<[String: Int]>([:])
 }
+*/
 
-public
+
 protocol CellSource {
 	var increment: Observable<Void> { get }
 	var decrement: Observable<Void> { get }
-	var bag: DisposeBag { get }
 }
 
 struct CellSink {
-	init(id: String, initialValue: Int, source: CellSource) {
-		self.id = id
-		let add = source.increment.map { 1 }
-		let subtract = source.decrement.map { -1 }
-		sum = Observable.of(add, subtract).merge()
-			.scan(initialValue, accumulator: { $0.0 + $0.1 })
-			.startWith(initialValue)
-	}
+	let total: String
+}
 
-	let id: String
-	let sum: Observable<Int>
+func cellSink(for source: CellSource) -> Observable<CellSink> {
+	let add = source.increment.map { 1 }
+	let subtract = source.decrement.map { -1 }
+	let sum = Observable.of(add, subtract).merge().scan(0) { $0.0 + $0.1 }
+		.startWith(0)
+		.map { "\($0)" }
+	return sum.map { CellSink(total: $0) }
 }

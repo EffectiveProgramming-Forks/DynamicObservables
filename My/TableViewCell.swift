@@ -17,14 +17,9 @@ class TableViewCell: UITableViewCell {
 	@IBOutlet weak var decrementButton: UIButton!
 	@IBOutlet weak var outputLabel: UILabel!
 
-	func configure(sink: CellSink) {
-		sink.sum
-			.map { "\($0)" }
-			.bindTo(outputLabel.rx.text)
-			.disposed(by: bag)
+	func configure(with sink: CellSink) {
+		outputLabel.text = sink.total
 	}
-
-	let bag = DisposeBag()
 
 }
 

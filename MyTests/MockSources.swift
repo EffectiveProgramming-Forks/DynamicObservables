@@ -8,8 +8,7 @@
 
 import Foundation
 import RxSwift
-import My
-
+@testable import My
 
 struct MockSource: Source
 {
@@ -17,12 +16,17 @@ struct MockSource: Source
 		return _add.asObservable()
 	}
 
-	var remove: Observable<String> {
+	var remove: Observable<Int> {
 		return _remove.asObservable()
 	}
-	
+
+	var cells: Observable<[ID: CellSource]> {
+		return _cells.asObservable()
+	}
+
 	let _add = PublishSubject<Void>()
-	let _remove = PublishSubject<String>()
+	let _remove = PublishSubject<Int>()
+	let _cells = PublishSubject<[ID: CellSource]>()
 }
 
 struct MockCellSource: CellSource
