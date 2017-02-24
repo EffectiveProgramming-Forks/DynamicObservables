@@ -36,21 +36,28 @@ class MyTest: XCTestCase {
 
 	func testRemove() {
 		source._remove.onNext(0)
+		let _ = _sink.subscribe(onNext: {
+			self.source._cells.onNext((id: $0.cells[0].id, MockCellSource()))
+		})
 		XCTAssertEqual(result.total, "0")
 		XCTAssertEqual(result.cells.count, 0)
 	}
 
 	func testAdd() {
 		source._add.onNext()
+		let _ = _sink.subscribe(onNext: {
+			self.source._cells.onNext((id: $0.cells[0].id, MockCellSource()))
+		})
 		XCTAssertEqual(result.total, "0")
 		XCTAssertEqual(result.cells.count, 2)
 	}
 
 	func testCell() {
-		let cell = MockCellSource()
-		let id = ID()
-		source._cells.onNext([id: cell])
-		cell._increment.onNext()
+		let _ = _sink.subscribe(onNext: {
+			let cell = MockCellSource()
+			self.source._cells.onNext((id: $0.cells[0].id, cell))
+			cell._increment.onNext()
+		})
 		XCTAssertEqual(result.cells[0].sink.total, "1")
 	}
 }

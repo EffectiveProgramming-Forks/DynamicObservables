@@ -10,10 +10,10 @@ import Foundation
 import RxSwift
 
 
-protocol Source {
+protocol Source: class {
 	var add: Observable<Void> { get }
 	var remove: Observable<Int> { get }
-	var cells: Observable<[ID: CellSource]> { get }
+	var cellSource: Observable<(id: ID, source: CellSource)> { get }
 }
 
 struct Sink {
@@ -39,63 +39,21 @@ func sink(for source: Source) -> Observable<Sink> {
 			return result
 		}
 
-	return cells.map { cells in
-		Sink(total: "0", cells: cells)
-	}.startWith(Sink(total: "0", cells: [(id: ID(), sink: CellSink(total: "0"))]))
+	let cellSinks = source.cellSource.flatMap { (id, source) in cellSink(for: source).map { (id: id, sink: $0) }  }
+
+	return Observable.combineLatest(cells, cellSinks) { cells, sinks -> [(id: ID, sink: CellSink)] in
+		var result = cells
+		if let index = cells.index(where: { $0.id == sinks.id }) {
+			result[index].sink = sinks.sink
+		}
+		return result
+	}
+	.map { Sink(total: "0", cells: $0) }
+	.startWith(Sink(total: "0", cells: [(id: ID(), sink: CellSink(total: "0"))]))
 }
 
-/*
-struct Sink {
 
-	let total: Observable<Int>
-	let cells: Observable<[String]>
-
-	func cellSink(id: String, source: CellSource) -> CellSink {
-		let sink: CellSink
-		if let current = self.cellSinks.value[id] {
-			sink = CellSink(id: id, initialValue: current, source: source)
-		}
-		else {
-			sink = CellSink(id: id, initialValue: 0, source: source)
-		}
-		sink.sum.map { (sink.id, $0) }
-			.subscribe(onNext: {
-				self.cellSinks.value[$0.0] = $0.1
-			}, onCompleted: {
-				self.cellSinks.value.removeValue(forKey: sink.id)
-			})
-			.disposed(by: source.bag)
-		return sink
-	}
-
-	init(source: Source) {
-		total = cellSinks.asObservable().map { $0.values.reduce(0) { $0.0 + $0.1 } }
-		let adder = source.add.map { CellAction.add(NSUUID().uuidString) }
-		let remover = source.remove.map { CellAction.remove($0) }
-		cells = Observable.of(adder, remover).merge().scan([]) { current, next in
-			var result = current
-			switch next {
-			case .add(let id):
-				result.append(id)
-			case .remove(let id):
-				if let index = result.index(of: id) {
-					result.remove(at: index)
-				}
-			}
-			return result
-		}.startWith([])
-	}
-
-	private enum CellAction {
-		case add(String)
-		case remove(String)
-	}
-	private let cellSinks = Variable<[String: Int]>([:])
-}
-*/
-
-
-protocol CellSource {
+protocol CellSource: class {
 	var increment: Observable<Void> { get }
 	var decrement: Observable<Void> { get }
 }

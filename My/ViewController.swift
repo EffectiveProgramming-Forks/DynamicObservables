@@ -29,11 +29,11 @@ class ViewController: UIViewController {
 			.bindTo(tableView.rx.items(cellIdentifier: "Cell")) { (row, element, cell) in
 				guard let cell = cell as? TableViewCell else { fatalError() }
 				cell.configure(with: element.sink)
-				self._cells.value[element.id] = cell
+				self.sources.onNext((id: element.id, source: cell))
 		}.disposed(by: bag)
 	}
 
-	let _cells = Variable<[ID: CellSource]>([:])
+	var sources = PublishSubject<(id: ID, source: CellSource)>()
 	let bag = DisposeBag()
 }
 
@@ -46,8 +46,8 @@ extension ViewController: Source {
 		return tableView.rx.itemDeleted.map { $0.row }.asObservable()
 	}
 
-	var cells: Observable<[ID: CellSource]> {
-		return _cells.asObservable()
+	var cellSource: Observable<(id: ID, source: CellSource)> {
+		return sources.asObservable()
 	}
 
 }

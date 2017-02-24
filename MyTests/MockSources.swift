@@ -10,7 +10,7 @@ import Foundation
 import RxSwift
 @testable import My
 
-struct MockSource: Source
+class MockSource: Source
 {
 	var add: Observable<Void> {
 		return _add.asObservable()
@@ -20,16 +20,16 @@ struct MockSource: Source
 		return _remove.asObservable()
 	}
 
-	var cells: Observable<[ID: CellSource]> {
+	var cellSource: Observable<(id: ID, source: CellSource)> {
 		return _cells.asObservable()
 	}
 
 	let _add = PublishSubject<Void>()
 	let _remove = PublishSubject<Int>()
-	let _cells = PublishSubject<[ID: CellSource]>()
+	let _cells = PublishSubject<(id: ID, source: CellSource)>()
 }
 
-struct MockCellSource: CellSource
+class MockCellSource: CellSource
 {
 	var increment: Observable<Void> { return _increment.asObservable() }
 	var decrement: Observable<Void> { return _decrement.asObservable() }
