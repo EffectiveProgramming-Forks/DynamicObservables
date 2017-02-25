@@ -9,15 +9,23 @@
 import Foundation
 
 
-struct ID: Hashable {
+struct ID: Hashable, CustomStringConvertible {
+	
+	init() {
+		
+	}
 	var hashValue: Int {
 		return rawValue.hash
 	}
 
-	static func ==(lhs: ID, rhs: ID) -> Bool {
-		return lhs.rawValue.isEqual(rhs.rawValue)
+	var description: String {
+		return rawValue
 	}
 	
-	private let rawValue = NSUUID()
+	static func ==(lhs: ID, rhs: ID) -> Bool {
+		return lhs.rawValue == rhs.rawValue
+	}
+	
+	private let rawValue = NSUUID().uuidString
 }
 

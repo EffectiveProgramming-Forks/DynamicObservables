@@ -13,43 +13,47 @@ import RxSwift
 protocol Source: class {
 	var add: Observable<Void> { get }
 	var remove: Observable<Int> { get }
-	var cellSource: Observable<(id: ID, source: CellSource)> { get }
+	var cellSources: Observable<(id: ID, source: CellSource)> { get }
 }
 
 struct Sink {
 	let total: String
-	let cells: [ID]
-	let sinks: [ID: Observable<CellSink>]
+	let cellSinks: [(id: ID, sink: Observable<CellSink>?)]
 }
 
 private enum CellAction {
 	case add
 	case remove(Int)
+	case configure((id: ID, source: CellSource))
 }
 
 func sink(for source: Source) -> Observable<Sink> {
-	let firstID = ID()
 
 	let total = Observable.just("0")
-	let cells = Observable.of(source.add.map { CellAction.add }, source.remove.map { CellAction.remove($0) }).merge()
-		.scan(Array<ID>([firstID])) { cells, action in
+	
+	let addCell = source.add.map { CellAction.add }
+	let removeCell = source.remove.map { CellAction.remove($0) }
+	let configureCell = source.cellSources.map { CellAction.configure($0) }
+	let cellSinks = Observable.of(addCell, removeCell, configureCell).merge()
+		.startWith(.add)
+		.scan([]) { (cells, action) -> [(id: ID, sink: Observable<CellSink>?)] in
 			var result = cells
 			switch action {
+			case .add:
+				result.append((id: ID(), sink: nil))
 			case .remove(let index):
 				result.remove(at: index)
-			case .add:
-				result.append(ID())
+			case .configure(let (id, source)):
+				if let index = cells.index(where: { $0.id == id }) {
+					result[index] = (id: id, sink: cellSink(for: source))
+				}
 			}
+			print(result.map { ($0.id, $0.sink != nil) })
 			return result
-		}.startWith([firstID])
-
-	let cellSinks: Observable<[ID: Observable<CellSink>]> = source.cellSource.map { (id, source) in [id: cellSink(for: source)] }.startWith([:])
-
-	return Observable<Sink>.combineLatest(total, cells, cellSinks) { (total, cells, sinks) -> Sink in
-		return Sink(total: total, cells: cells, sinks: sinks)
-	}
+		}
+	
+	return Observable.combineLatest(total, cellSinks) { Sink(total: $0, cellSinks: $1) }
 }
-
 
 protocol CellSource: class {
 	var increment: Observable<Void> { get }

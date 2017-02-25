@@ -17,6 +17,8 @@ class TableViewCell: UITableViewCell {
 	@IBOutlet weak var decrementButton: UIButton!
 	@IBOutlet weak var outputLabel: UILabel!
 
+	private (set) var id: ID?
+	
 	func configure(with sink: Observable<CellSink>) {
 		sink.map { $0.total }
 			.bindTo(outputLabel.rx.text)
