@@ -24,22 +24,33 @@ class ViewController: UIViewController {
 			.bindTo(totalLabel.rx.text)
 			.disposed(by: bag)
 		
-		sink.cells.subscribe(onNext: {
-			self.cells = $0
-			self.tableView.reloadData()
+		sink.cells.subscribe(onNext: { newCells in
+			self.tableView.beginUpdates()
+			let diffs = findDifferences(old: self.cells.map { $0.id }, new: newCells.map { $0.id }, moveBlock: { (old, new) in
+				let oldIndexPath = IndexPath(row: old, section: 0)
+				let newIndexPath = IndexPath(row: new, section: 0)
+				self.tableView.moveRow(at: oldIndexPath, to: newIndexPath)
+			})
+			let insertIndexPaths = diffs.insertions.map { IndexPath(row: $0, section: 0) }
+			self.tableView.insertRows(at: insertIndexPaths, with: .automatic)
+
+			let deleteIndexPaths = diffs.removals.map { IndexPath(row: $0, section: 0) }
+			self.tableView.deleteRows(at: deleteIndexPaths, with: .automatic)
+			self.cells = newCells
+			self.tableView.endUpdates()
 		}).disposed(by: bag)
 	}
 
 	var sink: Sink!
-	var cells: [String] = []
+	var cells: [(id: ID, factory: CellSink.Factory)] = []
 	let bag = DisposeBag()
 
-	let cellRemover = PublishSubject<String>()
+	let cellRemover = PublishSubject<Int>()
 }
 
 extension ViewController: Source {
 	var add: Observable<Void> { return addButton.rx.tap.asObservable() }
-	var remove: Observable<String> { return cellRemover.asObservable() }
+	var remove: Observable<Int> { return cellRemover.asObservable() }
 }
 
 extension ViewController: UITableViewDataSource {
@@ -49,7 +60,8 @@ extension ViewController: UITableViewDataSource {
 
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! TableViewCell
-		cell.configure(sink: sink.cellSink(id: cells[indexPath.row], source: cell))
+		let cellSink = cells[indexPath.row].factory
+		cell.configure(sink: cellSink(cell))
 		return cell
 	}
 }
@@ -57,6 +69,6 @@ extension ViewController: UITableViewDataSource {
 extension ViewController: UITableViewDelegate {
 	func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
 		guard editingStyle == .delete else { return }
-		cellRemover.onNext(cells[indexPath.row])
+		cellRemover.onNext(indexPath.row)
 	}
 }

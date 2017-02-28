@@ -18,7 +18,7 @@ class MyCellTests: XCTestCase {
 		super.setUp()
 
 		cellSource = MockCellSource()
-		cellSink = CellSink(id: "hello", initialValue: 0, source: cellSource)
+		cellSink = CellSink(initialValue: 0, source: cellSource)
 		bag = DisposeBag()
 	}
 

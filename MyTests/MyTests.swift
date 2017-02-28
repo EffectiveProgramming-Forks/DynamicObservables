@@ -12,7 +12,7 @@ import RxTest
 @testable import My
 
 
-class MyTests: XCTestCase {
+class MyCellsTests: XCTestCase {
 
 	override func setUp() {
 		super.setUp()
@@ -20,67 +20,42 @@ class MyTests: XCTestCase {
 		source = MockSource()
 		sink = Sink(source: source)
 		bag = DisposeBag()
+		resultCells = nil
+		sink.total.subscribe(onNext: { value in
+			self.resultTotal = value
+		}).disposed(by: bag)
+		sink.cells.subscribe(onNext: { value in
+			self.resultCells = value
+		}).disposed(by: bag)
 	}
 
 	private var source: MockSource!
 	private var sink: Sink!
 	private var bag: DisposeBag!
+	private var resultTotal: Int?
+	private var resultCells: [(id: ID, factory: CellSink.Factory)]?
 
-	func testInitialTotal() {
-		var result: Int? = nil
-		
-		sink.total.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-		
-		XCTAssertEqual(result, 0)
+	func testInitial() {
+		XCTAssertEqual(resultTotal, 0)
+		XCTAssertEqual(resultCells?.count, 1)
 	}
 
-	func testInitialCells() {
-		var result: [String]? = nil
-		
-		sink.cells.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-		
-		XCTAssertEqual(result ?? ["error"], [])
+	func testIncrement() {
+		let cell = MockCellSource()
+		let _ = resultCells![0].factory(cell)
+		cell._increment.onNext()
+		XCTAssertEqual(resultTotal, 1)
 	}
-	
+
 	func testAddCell() {
-		var result: [String]? = nil
-		
-		sink.cells.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-
 		source._add.onNext()
-		XCTAssert(result?.count == 1)
+		XCTAssertEqual(resultCells?.count, 2)
 	}
 
-	func testAddTwoCells() {
-		var result: [String]? = nil
-		
-		sink.cells.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-		
-		source._add.onNext()
-		source._add.onNext()
-		XCTAssert(result?.count == 2)
-	}
-
-	func testAddTwoCellsRemoveOne() {
-		var result: [String]? = nil
-		
-		sink.cells.subscribe(onNext: { value in
-			result = value
-		}).disposed(by: bag)
-		
-		source._add.onNext()
-		source._add.onNext()
-		let removed = result?[0] ?? "bad"
-		source._remove.onNext(removed)
-		XCTAssert(result?.count == 1)
-		XCTAssert(result?.index(of: removed) == nil)
+	func testRemoveCell() {
+		let toRemove = resultCells?[0].id
+		source._remove.onNext(0)
+		XCTAssertEqual(resultCells?.count, 0)
+		XCTAssertEqual(resultCells?.index(where: { toRemove == $0.id }), nil)
 	}
 }

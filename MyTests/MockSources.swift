@@ -17,12 +17,12 @@ struct MockSource: Source
 		return _add.asObservable()
 	}
 
-	var remove: Observable<String> {
+	var remove: Observable<Int> {
 		return _remove.asObservable()
 	}
 	
 	let _add = PublishSubject<Void>()
-	let _remove = PublishSubject<String>()
+	let _remove = PublishSubject<Int>()
 }
 
 struct MockCellSource: CellSource
