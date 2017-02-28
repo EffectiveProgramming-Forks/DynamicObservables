@@ -18,28 +18,38 @@ protocol Source {
 
 class Sink {
 
+	typealias Factory = (Source) -> Sink
+
+	static func factory(initialValue: [Int]) -> Factory {
+		return { source in
+			return Sink(initialValue: initialValue, source: source)
+		}
+	}
+
 	let total: Observable<Int>
 	private (set) var cells: Observable<[(id: ID, factory: CellSink.Factory)]> = Observable.just([])
 
-	init(source: Source) {
-		total = cellSinks.asObservable().map { $0.values.reduce(0) { $0.0 + $0.1 } }
-		let adder = source.add.map { CellAction.add }
+	var modelState: Observable<[Int]> {
+		return cellSinks.asObservable().map { Array($0.values) }
+	}
+
+	init(initialValue: [Int] = [0], source: Source) {
+		total = cellSinks.asObservable().map {
+			let foo = $0.values.reduce(0) { $0.0 + $0.1 }
+			return foo
+		}
+
+		let initialAdders = Observable.from(initialValue.map { CellAction.add(initialValue: $0) })
+
+		let adder = source.add.map { CellAction.add(initialValue: 0) }
 		let remover = source.remove.map { CellAction.remove($0) }
-		cells = Observable.of(adder, remover).merge()
-			.startWith(CellAction.add)
-			.scan([]) { current, next in
+		cells = Observable.of(Observable.of(initialAdders, adder).concat(), remover).merge()
+			.scan([]) { (current, next) -> [(id: ID, factory: CellSink.Factory)] in
 			var result = current
 			switch next {
-			case .add:
+			case .add(let initialValue):
 				let id = ID()
-				let factory: (CellSource) -> CellSink = { source in
-					let sink = CellSink(initialValue: 0, source: source)
-					sink.sum.subscribe(onNext: { (sum: Int) -> Void in
-						self.cellSinks.value[id] = sum
-					}).disposed(by: source.bag)
-					return sink
-				}
-
+				let factory = self.cellFactory(id: id, initialValue: initialValue)
 				result.append((id: id, factory: factory))
 			case .remove(let index):
 				let removed = result.remove(at: index)
@@ -50,10 +60,21 @@ class Sink {
 	}
 
 	private enum CellAction {
-		case add
+		case add(initialValue: Int)
 		case remove(Int)
 	}
+
 	private let cellSinks = Variable<[ID: Int]>([:])
+
+	private func cellFactory(id: ID, initialValue: Int) -> (CellSource) -> CellSink {
+		return { source in
+			let sink = CellSink(initialValue: initialValue, source: source)
+			sink.sum.subscribe(onNext: { (sum: Int) -> Void in
+				self.cellSinks.value[id] = sum
+			}).disposed(by: source.bag)
+			return sink
+		}
+	}
 }
 
 public
@@ -66,7 +87,7 @@ protocol CellSource {
 struct CellSink {
 	typealias Factory = (CellSource) -> CellSink
 
-	static func factory(initialValue: Int) -> (CellSource) -> CellSink {
+	static func factory(initialValue: Int) -> Factory {
 		return { source in
 			return CellSink(initialValue: initialValue, source: source)
 		}
@@ -76,9 +97,8 @@ struct CellSink {
 		let add = source.increment.map { 1 }
 		let subtract = source.decrement.map { -1 }
 		sum = Observable.of(add, subtract).merge()
-			.scan(initialValue, accumulator: { $0.0 + $0.1 })
 			.startWith(initialValue)
-			.debug()
+			.scan(initialValue, accumulator: { $0.0 + $0.1 })
 	}
 
 	let sum: Observable<Int>

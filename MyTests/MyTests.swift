@@ -58,4 +58,27 @@ class MyCellsTests: XCTestCase {
 		XCTAssertEqual(resultCells?.count, 0)
 		XCTAssertEqual(resultCells?.index(where: { toRemove == $0.id }), nil)
 	}
+
+}
+
+
+class MyCellsModelTests: XCTestCase {
+	func testInitialValue() {
+		let source = MockSource()
+		let sink = Sink(initialValue: [1, 2, 3], source: source)
+		let bag = DisposeBag()
+		var resultTotal: Int = 0
+		var resultCells: [(id: ID, factory: CellSink.Factory)] = []
+
+		sink.total.subscribe(onNext: { value in
+			resultTotal = value
+			print("resultTotal: \(resultTotal)")
+		}).disposed(by: bag)
+		sink.cells.subscribe(onNext: { value in
+			resultCells = value
+		}).disposed(by: bag)
+
+		XCTAssertEqual(resultTotal, 6)
+		XCTAssertEqual(resultCells.count, 3)
+	}
 }

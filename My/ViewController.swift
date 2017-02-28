@@ -17,9 +17,11 @@ class ViewController: UIViewController {
 	@IBOutlet weak var addButton: UIButton!
 	@IBOutlet weak var tableView: UITableView!
 
+	var factory: Sink.Factory!
+
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		sink = Sink(source: self)
+		sink = factory(self)
 		sink.total.map { "\($0)" }
 			.bindTo(totalLabel.rx.text)
 			.disposed(by: bag)
