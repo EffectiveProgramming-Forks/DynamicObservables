@@ -26,10 +26,16 @@ class MyCellsTests: XCTestCase {
 		}).disposed(by: bag)
 		sink.cells.subscribe(onNext: { value in
 			self.resultCells = value
+			for cell in self.resultCells! {
+				let cellSource = MockCellSource()
+				let _ = cell.factory(cellSource)
+				self.cellSources[cell.id] = cellSource
+			}
 		}).disposed(by: bag)
 	}
 
 	private var source: MockSource!
+	private var cellSources: [ID: MockCellSource] = [:]
 	private var sink: Sink!
 	private var bag: DisposeBag!
 	private var resultTotal: Int?
@@ -41,9 +47,7 @@ class MyCellsTests: XCTestCase {
 	}
 
 	func testIncrement() {
-		let cell = MockCellSource()
-		let _ = resultCells![0].factory(cell)
-		cell._increment.onNext()
+		cellSources.values.first!._increment.onNext()
 		XCTAssertEqual(resultTotal, 1)
 	}
 
@@ -63,19 +67,22 @@ class MyCellsTests: XCTestCase {
 
 
 class MyCellsModelTests: XCTestCase {
+	
 	func testInitialValue() {
 		let source = MockSource()
 		let sink = Sink(initialValue: [1, 2, 3], source: source)
 		let bag = DisposeBag()
-		var resultTotal: Int = 0
+		var resultTotal: Int? = nil
 		var resultCells: [(id: ID, factory: CellSink.Factory)] = []
 
 		sink.total.subscribe(onNext: { value in
 			resultTotal = value
-			print("resultTotal: \(resultTotal)")
 		}).disposed(by: bag)
 		sink.cells.subscribe(onNext: { value in
 			resultCells = value
+			for cell in resultCells {
+				let _ = cell.factory(MockCellSource())
+			}
 		}).disposed(by: bag)
 
 		XCTAssertEqual(resultTotal, 6)

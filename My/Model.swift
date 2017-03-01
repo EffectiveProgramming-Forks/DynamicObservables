@@ -98,7 +98,7 @@ struct CellSink {
 		let subtract = source.decrement.map { -1 }
 		sum = Observable.of(add, subtract).merge()
 			.startWith(initialValue)
-			.scan(initialValue, accumulator: { $0.0 + $0.1 })
+			.scan(0, accumulator: { $0.0 + $0.1 })
 	}
 
 	let sum: Observable<Int>
