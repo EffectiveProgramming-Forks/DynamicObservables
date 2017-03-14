@@ -10,19 +10,26 @@ import Foundation
 import RxSwift
 
 
-public
 protocol Source {
 	var add: Observable<Void> { get }
 	var remove: Observable<Int> { get }
+	var bag: DisposeBag { get }
 }
+
+protocol Store {
+	func save(data: Observable<[Int]>)
+}
+
 
 class Sink {
 
 	typealias Factory = (Source) -> Sink
 
-	static func factory(initialValue: [Int]) -> Factory {
+	static func factory(initialValue: [Int] = [0], store: Store) -> Factory {
 		return { source in
-			return Sink(initialValue: initialValue, source: source)
+			let sink = Sink(initialValue: initialValue, source: source)
+			store.save(data: sink.modelState)
+			return sink
 		}
 	}
 
@@ -34,10 +41,7 @@ class Sink {
 	}
 
 	init(initialValue: [Int] = [0], source: Source) {
-		total = cellSinks.asObservable().map {
-			let foo = $0.values.reduce(0) { $0.0 + $0.1 }
-			return foo
-		}
+		total = cellSinks.asObservable().map { $0.values.reduce(0) { $0.0 + $0.1 } }
 
 		let initialAdders = Observable.from(initialValue.map { CellAction.add(initialValue: $0) })
 

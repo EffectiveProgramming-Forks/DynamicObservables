@@ -8,7 +8,7 @@
 
 import Foundation
 import RxSwift
-import My
+@testable import My
 
 
 struct MockSource: Source
@@ -20,7 +20,9 @@ struct MockSource: Source
 	var remove: Observable<Int> {
 		return _remove.asObservable()
 	}
-	
+
+	let bag = DisposeBag()
+
 	let _add = PublishSubject<Void>()
 	let _remove = PublishSubject<Int>()
 }

@@ -19,6 +19,7 @@
 		0958ABA61E5DDA73006A9631 /* MockSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0958ABA51E5DDA73006A9631 /* MockSources.swift */; };
 		0958ABA91E5DE6C7006A9631 /* MyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0958ABA81E5DE6C7006A9631 /* MyTests.swift */; };
 		0958ABAB1E5DF129006A9631 /* TableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0958ABAA1E5DF129006A9631 /* TableViewCell.swift */; };
+		098E2ABE1E788B8300A55A67 /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098E2ABD1E788B8300A55A67 /* MockStore.swift */; };
 		17226E4488B6E05DACBBE5D9 /* Pods_MyTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DBADA77C3C871913840F13ED /* Pods_MyTests.framework */; };
 		C542BDFF01E631DC7CFF90FE /* Pods_My.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A4243E48AF5FB5EB76734C /* Pods_My.framework */; };
 /* End PBXBuildFile section */
@@ -50,6 +51,7 @@
 		0958ABA51E5DDA73006A9631 /* MockSources.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockSources.swift; sourceTree = "<group>"; };
 		0958ABA81E5DE6C7006A9631 /* MyTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyTests.swift; sourceTree = "<group>"; };
 		0958ABAA1E5DF129006A9631 /* TableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TableViewCell.swift; sourceTree = "<group>"; };
+		098E2ABD1E788B8300A55A67 /* MockStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockStore.swift; sourceTree = "<group>"; };
 		23C2DDBE8AF339B07099FCF0 /* Pods-MyTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-MyTests/Pods-MyTests.release.xcconfig"; sourceTree = "<group>"; };
 		47C9F3842A1AF4A66D2BE8D5 /* Pods-My.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-My.release.xcconfig"; path = "Pods/Target Support Files/Pods-My/Pods-My.release.xcconfig"; sourceTree = "<group>"; };
 		931B8E173A10A2608934FCCE /* Pods-My.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-My.debug.xcconfig"; path = "Pods/Target Support Files/Pods-My/Pods-My.debug.xcconfig"; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				0958AB9D1E5DD992006A9631 /* MyCellTests.swift */,
 				0958ABA81E5DE6C7006A9631 /* MyTests.swift */,
 				0958ABA51E5DDA73006A9631 /* MockSources.swift */,
+				098E2ABD1E788B8300A55A67 /* MockStore.swift */,
 				0958AB9F1E5DD992006A9631 /* Info.plist */,
 			);
 			path = MyTests;
@@ -364,6 +367,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0958ABA61E5DDA73006A9631 /* MockSources.swift in Sources */,
+				098E2ABE1E788B8300A55A67 /* MockStore.swift in Sources */,
 				0958AB9E1E5DD992006A9631 /* MyCellTests.swift in Sources */,
 				0958ABA91E5DE6C7006A9631 /* MyTests.swift in Sources */,
 			);
