@@ -13,7 +13,6 @@ import RxSwift
 protocol Source {
 	var add: Observable<Void> { get }
 	var remove: Observable<Int> { get }
-	var bag: DisposeBag { get }
 }
 
 protocol Store {
